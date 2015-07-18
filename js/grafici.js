@@ -8,12 +8,14 @@ DOMReady(function () {
 		outputID: "grafici-output",
 		graphSize: {
 			width: 200,
-			height: 100,
-			padFactor: 1.1
+			height: 100
 		},
 		graphBorder: {
-			color: "blue",
-			width: "1px"
+			color: "#444",
+			width: "0.075em"
+		},
+		graphLines: {
+			color: "rgb(20,100,200)"
 		}
 	};
 
@@ -88,12 +90,16 @@ function Grafici(config) {
 
 	this.drawGraphs = function(graphs) {
 
-		//Get the top and bottom of the chart with padding space added in
-		var chartTop = Math.round(this.config.graphSize.height-(this.config.graphSize.height*this.config.graphSize.padFactor));
-		var chartBottom = Math.round(this.config.graphSize.height * (this.config.graphSize.padFactor*this.config.graphSize.padFactor));
-
 		for (var graphIndex in graphs) {
+
 			var currentGraph = graphs[graphIndex];
+
+			var paddingFactor = (((currentGraph.numRows + 1) / currentGraph.numRows) + 1) / 2;
+			paddingFactor = ((paddingFactor - 1) / 2) + 1;
+
+			//Get the top and bottom of the chart with padding space added in
+			var chartTop = Math.floor(this.config.graphSize.height-(this.config.graphSize.height*paddingFactor));
+			var chartBottom = Math.floor(this.config.graphSize.height * (paddingFactor * paddingFactor));
 
 			//Hide taret tables, leaving them visible for a screenreader
 			this.targetTables[graphIndex].style.cssText = "opacity:0;position:absolute !important;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);";
@@ -101,15 +107,15 @@ function Grafici(config) {
 			var svg = '<figure class="grafici-graph" id="' + this.config.outputID + '-' + currentGraph.id + '"><svg viewBox = "0 ' + chartTop + ' ' + this.config.graphSize.width + ' ' + chartBottom + '" version = "1.1">'; 
 
 			//draw baseline grid's rows and columns
-			for (var i = -1; i < currentGraph.numRows + 1; i++) {
-				var rowHeight = ((i+1) / (currentGraph.numRows + 1)) * this.config.graphSize.height;
-				var columnLeft = ((i+1) / (currentGraph.numColumns + 1)) * this.config.graphSize.width;
+			for (var i = -1; i < (currentGraph.numRows * 4) + 1; i++) {
+				var rowHeight = ((i+1) / (currentGraph.numRows*4 + 1)) * this.config.graphSize.height;
+				var columnLeft = ((i+1) / (currentGraph.numColumns*4 + 1)) * this.config.graphSize.width;
 
 				//rows
-				svg += this.drawLine(0, rowHeight, this.config.graphSize.width, rowHeight, 'blue', 0.125);
+				svg += this.drawLine(0, rowHeight, this.config.graphSize.width, rowHeight, this.config.graphLines.color, 0.0625);
 
 				//columns
-				svg += this.drawLine(columnLeft, chartTop, columnLeft, chartBottom, 'blue', 0.125);
+				svg += this.drawLine(columnLeft, chartTop, columnLeft, chartBottom, this.config.graphLines.color, 0.0625);
 			}
 
 			//draw data labels
@@ -118,7 +124,7 @@ function Grafici(config) {
 				var dataHeight = parseInt(this.config.graphSize.height) + (((currentGraph.yAxis[j] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height);
 
 				//datalabels
-				svg +=  this.drawText(columnLeft, dataHeight, 'black', 3, currentGraph.yAxis[j]);
+				svg +=  this.drawText(columnLeft, dataHeight, 'black', '4', currentGraph.yAxis[j]);
 			}
 
 			svg += '</svg><figcaption>' + currentGraph.title + '</figcaption></figure>';
