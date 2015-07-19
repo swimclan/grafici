@@ -14,16 +14,21 @@ DOMReady(function () {
 			color: "#444",
 			width: "0.075em"
 		},
-		graphLines: {
-			color: "rgb(20,100,200)"
+		gridLines: {
+			size: 3,
+			stroke: "rgb(20,100,200)",
+			strokeWidth: "0.0625"
+		},
+		graphPoints: {
+			color: "rgb(20,180,250)",
+			stroke: "transparent",
+			strokeWidth: 8,
+			radius: 1
 		}
 	};
 
   var grafici = new Grafici(graficiConfig);
 });
-
-
-
 
 function Grafici(config) {
 
@@ -43,47 +48,39 @@ function Grafici(config) {
 		var results;
 
 		for (var i = 0; i < targetTables.length; i++) {
-			var candidate = {};
-
-			candidate.id = i;
-
-			candidate.title = targetTables[i].getElementsByTagName('caption')[0].textContent;
-
 			var rows = targetTables[i].getElementsByTagName('tr');
-
 			var header = rows[0];
 
-			//Get titles for X and Y axes
-			candidate.xAxisLabel = header.cells[0].textContent;
-			candidate.yAxisLabel = header.cells[1].textContent;
-
-			candidate.xAxis = [];
-			candidate.yAxis = [];
-
+			var dataSet = {
+				id: i,
+				title: targetTables[i].getElementsByTagName('caption')[0].textContent,
+				xAxisLabel: header.cells[0].textContent,
+				yAxisLabel: header.cells[1].textContent,
+				xAxis: [],
+				yAxis: []
+			};
+			
 			//Get X axis data
 			for (var xIndex = 1; xIndex < rows.length; xIndex++) {
-				candidate.xAxis.push(rows[xIndex].cells[0].textContent);
+				dataSet.xAxis.push(rows[xIndex].cells[0].textContent);
 			}
 
 			//Get Y axis data
 			for (var yIndex = 1; yIndex < rows.length; yIndex++) {
-				candidate.yAxis.push(rows[yIndex].cells[1].textContent);
+				dataSet.yAxis.push(rows[yIndex].cells[1].textContent);
 			}
 
 			//Get number of rows and columns.
 			//TODO: allow for a custom number of rows/columns based on
 			//user specification.
-			candidate.numRows = candidate.xAxis.length;
-			candidate.numColumns = candidate.yAxis.length;
+			dataSet.numRows = dataSet.xAxis.length;
+			dataSet.numColumns = dataSet.yAxis.length;
 
-			candidate.max = this.getMaxOfArray(candidate.yAxis);
-			candidate.min = this.getMinOfArray(candidate.yAxis);
+			dataSet.max = this.getMaxOfArray(dataSet.yAxis);
+			dataSet.min = this.getMinOfArray(dataSet.yAxis);
 
-			this.graphs.push(candidate)
+			this.graphs.push(dataSet)
 		}
-
-		console.log("Graphs:");
-		console.dir(this.graphs)
 
 		this.drawGraphs(this.graphs);
 	};
@@ -94,42 +91,47 @@ function Grafici(config) {
 
 			var currentGraph = graphs[graphIndex];
 
+			//Fit graph within alotted space. Pads top and bottom by 5%.
 			var paddingFactor = (((currentGraph.numRows + 1) / currentGraph.numRows) + 1) / 2;
 			paddingFactor = ((paddingFactor - 1) / 2) + 1;
 
 			//Get the top and bottom of the chart with padding space added in
-			var chartTop = Math.floor(this.config.graphSize.height-(this.config.graphSize.height*paddingFactor));
-			var chartBottom = Math.floor(this.config.graphSize.height * (paddingFactor * paddingFactor));
+			var graphTop = Math.floor(this.config.graphSize.height-(this.config.graphSize.height*paddingFactor));
+			var graphBottom = Math.floor(this.config.graphSize.height * (paddingFactor * paddingFactor));
 
 			//Hide taret tables, leaving them visible for a screenreader
 			this.targetTables[graphIndex].style.cssText = "opacity:0;position:absolute !important;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);";
 
-			var svg = '<figure class="grafici-graph" id="' + this.config.outputID + '-' + currentGraph.id + '"><svg viewBox = "0 ' + chartTop + ' ' + this.config.graphSize.width + ' ' + chartBottom + '" version = "1.1">'; 
+			var output = '<figure class="grafici-graph" id="' + this.config.outputID + '-' + currentGraph.id + '">';
+			output += '<svg viewBox = "0 ' + graphTop + ' ' + this.config.graphSize.width + ' ' + graphBottom + '" version = "1.1">'; 
 
-			//draw baseline grid's rows and columns
-			for (var i = -1; i < (currentGraph.numRows * 4) + 1; i++) {
-				var rowHeight = ((i+1) / (currentGraph.numRows*4 + 1)) * this.config.graphSize.height;
-				var columnLeft = ((i+1) / (currentGraph.numColumns*4 + 1)) * this.config.graphSize.width;
+			if (this.config.gridLines) {
+				//draw baseline grid's rows
+				for (var i = graphTop; i < graphBottom / this.config.gridLines.size; i++) {
+					output += this.drawLine(0, i * this.config.gridLines.size, this.config.graphSize.width, i * this.config.gridLines.size, this.config.gridLines.stroke, this.config.gridLines.strokeWidth);
+				}
 
-				//rows
-				svg += this.drawLine(0, rowHeight, this.config.graphSize.width, rowHeight, this.config.graphLines.color, 0.0625);
+				//draw baseline grid's columns
+				for (var i = 0; i < this.config.graphSize.width / this.config.gridLines.size; i++) {
+					output += this.drawLine(i * this.config.gridLines.size, graphTop, i * this.config.gridLines.size, graphBottom, this.config.gridLines.stroke, this.config.gridLines.strokeWidth);
+				}	
+			}	
 
-				//columns
-				svg += this.drawLine(columnLeft, chartTop, columnLeft, chartBottom, this.config.graphLines.color, 0.0625);
-			}
-
-			//draw data labels
+			//draw data labels and points
 			for (var j = 0; j < currentGraph.numRows; j++) {
 				var columnLeft = ((j+1) / (currentGraph.numColumns + 1)) * this.config.graphSize.width;
 				var dataHeight = parseInt(this.config.graphSize.height) + (((currentGraph.yAxis[j] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height);
 
+				//datapoints
+				output += this.drawCircle(columnLeft, dataHeight, this.config.graphPoints.radius);
+
 				//datalabels
-				svg +=  this.drawText(columnLeft, dataHeight, 'black', '4', currentGraph.yAxis[j]);
+				output +=  this.drawText(columnLeft, dataHeight, 'black', '4', currentGraph.yAxis[j]);
 			}
 
-			svg += '</svg><figcaption>' + currentGraph.title + '</figcaption></figure>';
+			output += '</svg><figcaption>' + currentGraph.title + '</figcaption></figure>';
 
-			this.targetTables[graphIndex].insertAdjacentHTML('afterend', svg);
+			this.targetTables[graphIndex].insertAdjacentHTML('afterend', output);
 
 			document.getElementById(this.config.outputID + '-' + currentGraph.id).children[0].style.cssText = "border:" + this.config.graphBorder.width + " solid " + this.config.graphBorder.color + ";";
 		};
@@ -143,11 +145,17 @@ function Grafici(config) {
 	};
 
 	this.drawText = function(x, y, textColor, fontSize, textString) {
-		var text = '<text x="' + x + '" y="' + y + '" fill="' + textColor + '" font-size="' + fontSize + '">';
+		var text = '<text x="' + x + '" y="' + y + '" dx="2" fill="' + textColor + '" font-size="' + fontSize + '">';
 
 		text += textString.toString() + '</text>';
 
 		return text;
+	};
+
+	this.drawCircle = function(cx, cy, r) {
+		var circle = '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + this.config.graphPoints.color + '" stroke="' + this.config.graphPoints.stroke + '" stroke-width="' + this.config.graphPoints.strokeWidth + '" />';
+
+		return circle;
 	};
 
 	//Utility functions
@@ -158,7 +166,6 @@ function Grafici(config) {
 	this.getMinOfArray = function(numArray) {
   	return Math.min.apply(null, numArray);
 	};
-
 
 	this.init(this.config);
 

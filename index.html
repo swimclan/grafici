@@ -5,6 +5,28 @@
 	<title>grafici</title>
 </head>
 <body>
+
+	<style>
+		text {
+			transition:all 0.3s ease-in-out;
+			opacity:0;
+		}
+		circle {
+			transition:all 0.3s ease-in-out;
+		}
+		circle:hover {
+			stroke-width:1;
+			stroke:rgb(20,180,250);
+		}
+		circle:hover,
+		text:hover {
+			cursor: pointer;
+		}
+		circle:hover + text,
+		text:hover {
+			opacity:1;
+		}
+	</style>
 	
 	<h1>Grafici</h1>
 
