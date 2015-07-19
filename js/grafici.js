@@ -26,8 +26,8 @@ function Grafici(config) {
           } else {
             console.error('Table has no caption, falling back to generic name: ');
             console.dir(targetTables[i]);
-            return "unnamed table"
-          };
+            return "unnamed table";
+          }
         })(),
         xAxisLabel: header.cells[0].textContent,
         yAxisLabel: header.cells[1].textContent,
@@ -55,7 +55,7 @@ function Grafici(config) {
       dataSet.max = this.getMaxOfArray(dataSet.yAxis);
       dataSet.min = this.getMinOfArray(dataSet.yAxis);
 
-      this.graphs.push(dataSet)
+      this.graphs.push(dataSet);
     }
 
     this.drawGraphs(this.graphs);
@@ -81,7 +81,6 @@ function Grafici(config) {
   };
 
   this.drawGraphs = function(graphs) {
-
     for (var graphIndex in graphs) {
       var currentGraph = graphs[graphIndex];
 
@@ -110,8 +109,8 @@ function Grafici(config) {
         }
 
         //draw baseline grid's columns
-        for (var i = 0; i < this.config.graphSize.width / this.config.gridLines.size; i++) {
-          graphOutput += this.drawLine(i * this.config.gridLines.size, graphTop, i * this.config.gridLines.size, graphBottom, this.config.gridLines.stroke, this.config.gridLines.strokeWidth);
+        for (var m = 0; m < this.config.graphSize.width / this.config.gridLines.size; m++) {
+          graphOutput += this.drawLine(m * this.config.gridLines.size, graphTop, m * this.config.gridLines.size, graphBottom, this.config.gridLines.stroke, this.config.gridLines.strokeWidth);
         } 
       } 
 
@@ -163,8 +162,7 @@ function Grafici(config) {
       this.targetTables[graphIndex].insertAdjacentHTML('afterend', figureOutput);
 
       document.getElementById(this.config.outputID + '-' + currentGraph.id).querySelector('.grafici-graph__svg').style.cssText = "border:" + this.config.graphBorder.width + " solid " + this.config.graphBorder.color + ";";
-    };
-    
+    } // End main loop over graphs
   };
 
   this.drawLine = function(x1, y1, x2, y2, strokeColor, strokeWidth) {

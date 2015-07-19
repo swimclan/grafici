@@ -1,0 +1,36 @@
+{
+  "name": "grafici",
+  "version": "1.0.0",
+  "description": "Grafici is a dead-simple JavaScript-based SVG graph generator.",
+  "main": "grafici.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timrourke/grafici.git"
+  },
+  "keywords": [
+    "SVG",
+    "graph",
+    "chart",
+    "data",
+    "visualization"
+  ],
+  "author": "Tim Rourke",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/timrourke/grafici/issues"
+  },
+  "homepage": "https://github.com/timrourke/grafici#readme",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-jshint": "^1.11.2",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^1.2.0",
+    "jshint-stylish-ex": "^0.2.0"
+  }
+}
