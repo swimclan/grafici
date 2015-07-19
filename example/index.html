@@ -2,11 +2,39 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>grafici</title>
+	<title>grafici - a lightweight js graphing tool</title>
+	<link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,900,200italic' rel='stylesheet' type='text/css'>
 </head>
 <body>
 
 	<style>
+		* {
+			box-sizing:border-box;
+			-webkit-font-smoothing:antialiased;
+		}
+		html, body {
+			min-height:100%;
+		}
+		body {
+			background:linear-gradient(to bottom, #f5f9ff, #f5f9ff);
+			background-repeat:no-repeat;
+			font-family: 'Source Sans Pro', sans-serif;
+			color:#444;
+		}
+		h1 {
+			text-align:center;
+		}
+		figure {
+			background-color:#DCECFF;
+			padding:1em;
+		}
+		figcaption {
+			font-weight:900;
+			text-align:center;
+		}
+		.grafici-graph__svg {
+			background-color:white;
+		}
 		.grafici-graph__svg .grafici-data-label {
 			transition:all 0.3s ease-in-out;
 			opacity:0;
@@ -32,7 +60,7 @@
 		}
 	</style>
 	
-	<h1>Grafici</h1>
+	<h1>Grafici examples</h1>
 
 	<table class="grafici-example grafici-line-graph">
 		<caption>Google stock prices at market close, Jul 6-Jul 17 2015</caption>
@@ -86,8 +114,6 @@
 		</tbody>
 	</table>
 
-	<p>Test to prove graph is inserted at correct spot</p>
-
 	<table class="grafici-example grafici-bar-graph">
 		<caption>Skill in JavaScript</caption>
 		<thead>
@@ -140,6 +166,62 @@
 		</tbody>
 	</table>
 
-	<script src="js/grafici.js"></script>
+	<script>
+		WebFontConfig = {
+	    google: { families: [ 'Source+Sans+Pro:300,900,200italic:latin' ] }
+	  };
+	  (function() {
+	    var wf = document.createElement('script');
+	    wf.src = ('https:' == document.location.protocol ? 'https' : 'http') +
+	      '://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+	    wf.type = 'text/javascript';
+	    wf.async = 'true';
+	    var s = document.getElementsByTagName('script')[0];
+	    s.parentNode.insertBefore(wf, s);
+	  })();
+
+	  var DOMReady = function(a,b,c){b=document,c='addEventListener';b[c]?b[c]('DOMContentLoaded',a):window.attachEvent('onload',a)}
+    
+		DOMReady(function () {
+			var graficiConfig = {
+				tableClass: "grafici-example",
+				outputID: "grafici-output",
+				graphSize: {
+					width: 200,
+					height: 100,
+					xAxisHeight: 10,
+					yAxisWidth: 10,
+					yAxisLabelFrequency: 3
+				},
+				graphBorder: {
+					color: "#444",
+					width: "0.075em"
+				},
+				gridLines: {
+					size: 3,
+					stroke: "rgb(20,100,200)",
+					strokeWidth: 0.0625
+				},
+				graphPoints: {
+					color: "rgb(20,180,250)",
+					stroke: "transparent",
+					strokeWidth: 8,
+					radius: 1
+				},
+				graphLines: {
+					stroke: "rgb(20,100,200)",
+					strokeWidth: 0.5
+				},
+				barGraphLines: {
+					stroke: "rgb(10,130,180)",
+					strokeWidth: 8
+				}
+			};
+
+		  var grafici = new Grafici(graficiConfig);
+		});
+	</script>
+
+	<script src="../js/grafici.js"></script>
 </body>
 </html>

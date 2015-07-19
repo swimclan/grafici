@@ -1,38 +1,5 @@
 "use strict";
 
-var DOMReady = function(a,b,c){b=document,c='addEventListener';b[c]?b[c]('DOMContentLoaded',a):window.attachEvent('onload',a)}
-    
-DOMReady(function () {
-	var graficiConfig = {
-		tableClass: "grafici-example",
-		outputID: "grafici-output",
-		graphSize: {
-			width: 200,
-			height: 100,
-			xAxisHeight: 10,
-			yAxisWidth: 10,
-			yAxisLabelFrequency: 3
-		},
-		graphBorder: {
-			color: "#444",
-			width: "0.075em"
-		},
-		gridLines: {
-			size: 3,
-			stroke: "rgb(20,100,200)",
-			strokeWidth: "0.0625"
-		},
-		graphPoints: {
-			color: "rgb(20,180,250)",
-			stroke: "transparent",
-			strokeWidth: 8,
-			radius: 1
-		}
-	};
-
-  var grafici = new Grafici(graficiConfig);
-});
-
 function Grafici(config) {
 	this.config = config;
 	this.targetTables = [];
@@ -150,7 +117,7 @@ function Grafici(config) {
 				if (currentGraph.graphType.lineGraph) {
 					//lines between datapoints
 					if (j + 1 < currentGraph.numRows) {
-						graphOutput += this.drawLine(columnLeft, dataHeight, nextColumnLeft, nextDataHeight, "violet", 1);	
+						graphOutput += this.drawLine(columnLeft, dataHeight, nextColumnLeft, nextDataHeight, this.config.graphLines.stroke, this.config.graphLines.strokeWidth);	
 					}
 					//datapoints
 					graphOutput += this.drawCircle(columnLeft, dataHeight, this.config.graphPoints.radius);
@@ -158,7 +125,7 @@ function Grafici(config) {
 
 				if (currentGraph.graphType.barGraph) {
 					//datapoints
-					graphOutput += this.drawLine(columnLeft, graphBottom, columnLeft, dataHeight, "violet", 10);	
+					graphOutput += this.drawLine(columnLeft, graphBottom, columnLeft, dataHeight, this.config.barGraphLines.stroke, this.config.barGraphLines.strokeWidth);	
 				}
 				
 				//datalabels
