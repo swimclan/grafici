@@ -20,7 +20,15 @@ function Grafici(config) {
 
       var dataSet = {
         id: i,
-        title: targetTables[i].getElementsByTagName('caption')[0].textContent,
+        title: (function() { 
+          if ( targetTables[i].getElementsByTagName('caption').length ) {
+            return targetTables[i].getElementsByTagName('caption')[0].textContent;
+          } else {
+            console.error('Table has no caption, falling back to generic name: ');
+            console.dir(targetTables[i]);
+            return "unnamed table"
+          };
+        })(),
         xAxisLabel: header.cells[0].textContent,
         yAxisLabel: header.cells[1].textContent,
         xAxis: [],
