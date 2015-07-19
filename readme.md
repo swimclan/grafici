@@ -4,6 +4,59 @@ Grafici is a dead-simple JavaScript-based SVG graph generator for simple chartin
 
 It is designed to be as lightweight as possible, with no dependencies. 
 
+## Usage
+
+Include `grafici.js` in your page. 
+
+```markup
+<script src="grafici.js"></script>
+```
+
+Then instantiate a new Grafici object by passing in a new configuration object to the constructor as follows:
+
+```javascript
+var graficiConfig = {
+	tableClass: "grafici-example",
+	outputID: "grafici-output",
+	graphSize: {
+		width: 200,
+		height: 100,
+		xAxisHeight: 10,
+		yAxisWidth: 10,
+		yAxisLabelFrequency: 3
+	},
+	graphBorder: {
+		color: "#444",
+		width: "0.075em"
+	},
+	gridLines: {
+		size: 3,
+		stroke: "rgb(20,100,200)",
+		strokeWidth: 0.0625
+	},
+	graphPoints: {
+		color: "rgb(20,180,250)",
+		stroke: "transparent",
+		strokeWidth: 8,
+		radius: 1
+	},
+	graphLines: {
+		stroke: "rgb(20,100,200)",
+		strokeWidth: 0.5
+	},
+	barGraphLines: {
+		stroke: "rgb(10,130,180)",
+		strokeWidth: 8
+	}
+};
+
+var grafici = new Grafici(graficiConfig);
+```
+
+Grafici will inspect the page for any table elements containing the class passed to the configuration object as the value of `graficiConfig.tableClass`. In the above example, the class Grafici will use to identify graph candidates for conversion is `.grafici-example`. 
+
+As with any JavaScript designed to manipulate the DOM, it is recommended that this library be loaded only after a DOM ready event.
+
 ## Intended use case
 
 This library is designed to do one thing well: generate SVG markup from table elements and insert it into the DOM. It expects a table of at most **two columns** of data, one for the X axis, and one for the Y axis. The input tables are expected to be formatted as follows:
