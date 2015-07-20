@@ -95,9 +95,17 @@ function Grafici(config) {
       //Hide taret tables, leaving them visible for a screenreader
       this.targetTables[graphIndex].style.cssText = "opacity:0;position:absolute !important;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);";
 
-      //Create primary graph svg string
-      var figureOutput = '<figure class="grafici-graph" id="' + this.config.outputID + '-' + currentGraph.id + '">';
-      var graphOutput = '<svg class="grafici-graph__svg" viewBox = "0 ' + graphTop + ' ' + this.config.graphSize.width + ' ' + graphBottom + '" version = "1.1">'; 
+      //Create primary graph svg strings
+       var figureOutput = "",
+           graphOutput = "",
+           pathOutput = "",
+           svgOutput = "",
+           pathD = "";
+
+      figureOutput = '<figure class="grafici-graph" id="' + this.config.outputID + '-' + currentGraph.id + '">';
+      svgOutput = '<svg class="grafici-graph__svg" viewBox = "0 ' + graphTop + ' ' + this.config.graphSize.width + ' ' + graphBottom + '" version = "1.1">'; 
+      pathD;
+      graphOutput;
 
       //Create x axis labels svg string
       var outputXAxis = '<svg class="grafici-graph__xAxis" viewBox = "0 0 ' + this.config.graphSize.width + ' ' + this.config.graphSize.xAxisHeight + '" version = "1.1">'; 
@@ -114,6 +122,10 @@ function Grafici(config) {
         } 
       } 
 
+      if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
+        pathD = 'M' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + ((this.config.graphSize.height) + (((currentGraph.yAxis[currentGraph.numRows-1] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height)) + ' L' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom + ' L ' + ((1) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom;
+      }
+
       //draw data labels and points
       for (var j = 0; j < currentGraph.numRows; j++) {
         var columnLeft = ((j+1) / (currentGraph.numColumns + 1)) * this.config.graphSize.width;
@@ -121,16 +133,21 @@ function Grafici(config) {
         var nextColumnLeft = ((j+2) / (currentGraph.numColumns + 1)) * this.config.graphSize.width || false;
         var nextDataHeight = parseInt(this.config.graphSize.height) + (((currentGraph.yAxis[j+1] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height);
 
-        if (currentGraph.graphType.lineGraph) {
+        if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
           //lines between datapoints
           if (j + 1 < currentGraph.numRows) {
             graphOutput += this.drawLine(columnLeft, dataHeight, nextColumnLeft, nextDataHeight, this.config.graphLines.stroke, this.config.graphLines.strokeWidth);  
           }
+
+          if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
+            pathD += ' L ' + columnLeft + ' ' + dataHeight;  
+          }
+          
           //datapoints
           graphOutput += this.drawCircle(columnLeft, dataHeight, this.config.graphPoints.radius);
         }
 
-        if (currentGraph.graphType.barGraph) {
+        if (currentGraph.graphType.hasOwnProperty('barGraph')) {
           //datapoints
           graphOutput += this.drawLine(columnLeft, graphBottom, columnLeft, dataHeight, this.config.barGraphLines.stroke, this.config.barGraphLines.strokeWidth); 
         }
@@ -141,6 +158,13 @@ function Grafici(config) {
         //X axis datalabels
         outputXAxis += this.drawText(columnLeft, this.config.graphSize.xAxisHeight, 0, this.config.graphSize.xAxisHeight/-2, 'middle', 'black', 3, currentGraph.xAxis[j], 'grafici-x-label');
       } 
+
+      if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
+        pathD += " Z";
+        var pathOutput = '<path class="grafici-data-path" d="' + pathD + '" fill="' + this.config.pathFill + '"/>';
+      } else {
+        var pathOutput = "";
+      }
 
       //output Y axis datalabels
       for (var k = 0; k < (graphBottom / (this.config.gridLines.size * this.config.graphSize.yAxisLabelFrequency)); k++) {
@@ -155,9 +179,8 @@ function Grafici(config) {
       }
 
       outputXAxis += '</svg>';
-      graphOutput += '</svg>'; 
-      
-      figureOutput += graphOutput + outputXAxis + '<figcaption>' + currentGraph.title + '</figcaption></figure>';
+
+      figureOutput += svgOutput + pathOutput + graphOutput + '</svg>' + outputXAxis + '<figcaption>' + currentGraph.title + '</figcaption></figure>';
 
       this.targetTables[graphIndex].insertAdjacentHTML('afterend', figureOutput);
 
@@ -166,13 +189,13 @@ function Grafici(config) {
   };
 
   this.drawLine = function(x1, y1, x2, y2, strokeColor, strokeWidth) {
-    var line = '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + strokeColor + '" stroke-width = "' + strokeWidth + '"/>';
+    var line = '<line class="grafici-data-line" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + strokeColor + '" stroke-width = "' + strokeWidth + '"/>';
 
     return line;
   };
 
   this.drawText = function(x, y, dx, dy, textAnchor, textColor, fontSize, textString, className) {
-    var text = '<text class="' + className + '" x="' + x + '" y="' + y + '" dx="' + dx + '" dy="' + dy + '" text-anchor="' + textAnchor + '" fill="' + textColor + '" font-size="' + fontSize + '">';
+    var text = '<text class="grafici-data-text ' + className + '" x="' + x + '" y="' + y + '" dx="' + dx + '" dy="' + dy + '" text-anchor="' + textAnchor + '" fill="' + textColor + '" font-size="' + fontSize + '">';
 
     text += textString.toString() + '</text>';
 
@@ -180,7 +203,7 @@ function Grafici(config) {
   };
 
   this.drawCircle = function(cx, cy, r) {
-    var circle = '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + this.config.graphPoints.color + '" stroke="' + this.config.graphPoints.stroke + '" stroke-width="' + this.config.graphPoints.strokeWidth + '" />';
+    var circle = '<circle class="grafici-data-point" cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + this.config.graphPoints.color + '" stroke="' + this.config.graphPoints.stroke + '" stroke-width="' + this.config.graphPoints.strokeWidth + '" />';
 
     return circle;
   };

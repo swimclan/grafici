@@ -47,7 +47,8 @@ var graficiConfig = {
 	barGraphLines: {
 		stroke: "rgb(10,130,180)",
 		strokeWidth: 8
-	}
+	},
+	pathFill: "rgba(20,180,250,0.25)"
 };
 
 var grafici = new Grafici(graficiConfig);
@@ -164,7 +165,8 @@ var graficiConfig = {
 	barGraphLines: {						//barGraphLines set the appearance of the bar graph's lines
 		stroke: "rgb(10,130,180)",
 		strokeWidth: 8
-	}
+	},
+	pathFill: "rgba(20,180,250,0.25)" //pathFill sets the background color of the path's fill (duh) in a line graph
 };
 
 var grafici = new Grafici(graficiConfig);
