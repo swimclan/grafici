@@ -33,10 +33,11 @@ function Grafici(config) {
         xAxisLabel: header.cells[0].textContent,
         yAxisLabel: header.cells[1].textContent,
         xAxis: [],
+        //This is an array of y-axis series to support multiple graphs on a single coordinate plane
         ySeries: [],
         graphType: this.getGraphType(targetTables[i])
       };
-      console.log(dataSet);
+
       //Get X axis data
       for (var xIndex = 1; xIndex < rows.length; xIndex++) {
         dataSet.xAxis.push(rows[xIndex].cells[0].textContent);
@@ -45,20 +46,21 @@ function Grafici(config) {
       //Get Y axis data
       for (var ySeriesIndex = 0; ySeriesIndex < dataSet.numDataSeries; ySeriesIndex++) {
         var yAxis = [];
-        for (var yIndex = 1; i < rows.length; yIndex++) {
+        for (var yIndex = 1; yIndex < rows.length; yIndex++) {
           yAxis.push(rows[yIndex].cells[ySeriesIndex + 1].textContent);
         }
         dataSet.ySeries.push(yAxis);
       }
-      console.log(dataSet);
+      console.log(dataSet);  ///////////////////// Delete this for production
       //Get number of rows and columns.
       //TODO: allow for a custom number of rows/columns based on
       //user specification.
       dataSet.numRows = dataSet.xAxis.length;
-      dataSet.numColumns = dataSet.yAxis.length;
+      dataSet.numColumns = dataSet.ySeries.length;
 
-      dataSet.max = this.getMaxOfArray(dataSet.yAxis);
-      dataSet.min = this.getMinOfArray(dataSet.yAxis);
+      // Need to be able to find the max among all the series of y data
+      dataSet.max = this.getMaxAmongArrays(dataSet.ySeries);
+      dataSet.min = this.getMinAmongArrays(dataSet.ySeries);
 
       this.graphs.push(dataSet);
     }
@@ -102,13 +104,19 @@ function Grafici(config) {
 
       //Create primary graph svg strings
        var figureOutput = "",
-           graphOutput = "",
-           pathOutput = "",
+           //need a background grid seperate from the data line graph output to support multiple y data series
+           gridOutput = "",
+           //multiple graph outputs for each y data series
+           graphOutput = [],
+           //multiple path outputs for each y data series
+           pathOutput = [],
            svgOutput = "",
-           pathD = "";
+           //build multiple paths for each y series
+           pathD = [];
 
       figureOutput = '<figure class="grafici-graph" id="' + this.config.outputID + '-' + currentGraph.id + '">';
       svgOutput = '<svg class="grafici-graph__svg" viewBox = "0 ' + graphTop + ' ' + this.config.graphSize.width + ' ' + graphBottom + '" version = "1.1">';
+      gridOutput;
       pathD;
       graphOutput;
 
@@ -118,38 +126,66 @@ function Grafici(config) {
       if (this.config.gridLines) {
         //draw baseline grid's rows
         for (var i = graphTop; i < graphBottom / this.config.gridLines.size; i++) {
-          graphOutput += this.drawLine(0, i * this.config.gridLines.size, this.config.graphSize.width, i * this.config.gridLines.size, this.config.gridLines.stroke, this.config.gridLines.strokeWidth);
+          gridOutput += this.drawLine(0, i * this.config.gridLines.size, this.config.graphSize.width, i * this.config.gridLines.size, this.config.gridLines.stroke, this.config.gridLines.strokeWidth);
         }
 
         //draw baseline grid's columns
         for (var m = 0; m < this.config.graphSize.width / this.config.gridLines.size; m++) {
-          graphOutput += this.drawLine(m * this.config.gridLines.size, graphTop, m * this.config.gridLines.size, graphBottom, this.config.gridLines.stroke, this.config.gridLines.strokeWidth);
+          gridOutput += this.drawLine(m * this.config.gridLines.size, graphTop, m * this.config.gridLines.size, graphBottom, this.config.gridLines.stroke, this.config.gridLines.strokeWidth);
         }
       }
 
       if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
-        pathD = 'M' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + ((this.config.graphSize.height) + (((currentGraph.yAxis[currentGraph.numRows-1] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height)) + ' L' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom + ' L ' + ((1) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom;
+        for (var pathDIndex=0; pathDIndex<currentGraph.ySeries.length; pathDIndex++) {
+          //mutate pathD with a path for each y series
+          pathD[pathDIndex] = 'M' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + ((this.config.graphSize.height) + (((currentGraph.ySeries[pathDIndex][currentGraph.numRows-1] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height)) + ' L' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom + ' L ' + ((1) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom;
+        }
+        console.log(pathD); /////////////////Delete this shit before production
       }
 
       //draw data labels and points
       for (var j = 0; j < currentGraph.numRows; j++) {
         var columnLeft = ((j+1) / (currentGraph.numColumns + 1)) * this.config.graphSize.width;
-        var dataHeight = this.config.graphSize.height + (((currentGraph.yAxis[j] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height);
+        //again, need  multiple data heights for each x value to support multiple y series
+        var dataHeight = [];
+        for (var dataHeightIndex = 0; dataHeightIndex < currentGraph.ySeries.length; dataHeightIndex++) {
+          dataHeight.push(this.config.graphSize.height + (((currentGraph.ySeries[dataHeightIndex][j] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height));
+        }
+        console.log(dataHeight); ////////////delete this shit for production
         var nextColumnLeft = ((j+2) / (currentGraph.numColumns + 1)) * this.config.graphSize.width || false;
-        var nextDataHeight = parseInt(this.config.graphSize.height) + (((currentGraph.yAxis[j+1] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height);
-
+        //multiple next data heights for multiple y data series
+        var nextDataHeight = [];
+        for (var nextDataHeightIndex = 0; nextDataHeightIndex < currentGraph.ySeries.length; nextDataHeightIndex++) {
+          nextDataHeight.push(parseInt(this.config.graphSize.height) + (((currentGraph.ySeries[nextDataHeightIndex][j+1] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height));
+        }
+        console.log(nextDataHeight); ////////////delete this shit for production
         if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
           //lines between datapoints
           if (j + 1 < currentGraph.numRows) {
-            graphOutput += this.drawLine(columnLeft, dataHeight, nextColumnLeft, nextDataHeight, this.config.graphLines.stroke, this.config.graphLines.strokeWidth);
+            // populate the graphOutput array with multiple strings for each y data series
+            for (var seriesIndex=0; seriesIndex < currentGraph.ySeries.length; seriesIndex++) {
+              //check to see if the array is blank (meaning no string in it yet)
+              if (graphOutput[seriesIndex] === undefined) {
+                graphOutput[seriesIndex] = "";
+                console.log('This graph element started as undefined')
+              }
+              graphOutput[seriesIndex] += this.drawLine(columnLeft, dataHeight[seriesIndex], nextColumnLeft, nextDataHeight[seriesIndex], this.config.graphLines.stroke, this.config.graphLines.strokeWidth);
+            }
           }
 
           if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
-            pathD += ' L ' + columnLeft + ' ' + dataHeight;
+            //append to the pathD array for each y data series
+            for (var pathDIndex=0; pathDIndex<currentGraph.ySeries.length; pathDIndex++) {
+              pathD[pathDIndex] += ' L ' + columnLeft + ' ' + dataHeight[pathDIndex];
+            }
           }
 
           //datapoints
-          graphOutput += this.drawCircle(columnLeft, dataHeight, this.config.graphPoints.radius);
+          //add to each graphOutput value in the graphOutput array for each y data series
+          for (var graphDataIndex=0; graphDataIndex<currentGraph.ySeries.length; graphDataIndex++) {
+            graphOutput[graphDataIndex] += this.drawCircle(columnLeft, dataHeight[graphDataIndex], this.config.graphPoints.radius);
+          }
+          console.log(graphOutput);
         }
 
         if (currentGraph.graphType.hasOwnProperty('barGraph')) {
@@ -214,12 +250,24 @@ function Grafici(config) {
   };
 
   //Utility functions
-  this.getMaxOfArray = function(numArray) {
-    return Math.max.apply(null, numArray);
+  this.getMaxAmongArrays = function(seriesArray) {
+    var masterArray = [];
+    seriesArray.forEach(function(memberArray) {
+      memberArray.forEach(function(num) {
+        masterArray.push(num);
+      });
+    });
+    return Math.max.apply(null, masterArray);
   };
 
-  this.getMinOfArray = function(numArray) {
-    return Math.min.apply(null, numArray);
+  this.getMinAmongArrays = function(seriesArray) {
+    var masterArray = [];
+    seriesArray.forEach(function(memberArray) {
+      memberArray.forEach(function(num) {
+        masterArray.push(num);
+      });
+    });
+    return Math.min.apply(null, masterArray);
   };
 
   this.init(this.config);
