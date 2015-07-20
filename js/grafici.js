@@ -6,7 +6,7 @@ function Grafici(config) {
   this.graphs = [];
 
   this.init = function(config) {
-    this.targetTables = document.querySelectorAll('.' + config.tableClass); 
+    this.targetTables = document.querySelectorAll('.' + config.tableClass);
 
     this.buildGraphs(this.targetTables);
   };
@@ -20,7 +20,7 @@ function Grafici(config) {
 
       var dataSet = {
         id: i,
-        title: (function() { 
+        title: (function() {
           if ( targetTables[i].getElementsByTagName('caption').length ) {
             return targetTables[i].getElementsByTagName('caption')[0].textContent;
           } else {
@@ -29,23 +29,28 @@ function Grafici(config) {
             return "unnamed table";
           }
         })(),
+        numDataSeries: rows[0].children.length - 1,
         xAxisLabel: header.cells[0].textContent,
         yAxisLabel: header.cells[1].textContent,
         xAxis: [],
-        yAxis: [],
+        ySeries: [],
         graphType: this.getGraphType(targetTables[i])
       };
-      
+      console.log(dataSet);
       //Get X axis data
       for (var xIndex = 1; xIndex < rows.length; xIndex++) {
         dataSet.xAxis.push(rows[xIndex].cells[0].textContent);
       }
 
       //Get Y axis data
-      for (var yIndex = 1; yIndex < rows.length; yIndex++) {
-        dataSet.yAxis.push(rows[yIndex].cells[1].textContent);
+      for (var ySeriesIndex = 0; ySeriesIndex < dataSet.numDataSeries; ySeriesIndex++) {
+        var yAxis = [];
+        for (var yIndex = 1; i < rows.length; yIndex++) {
+          yAxis.push(rows[yIndex].cells[ySeriesIndex + 1].textContent);
+        }
+        dataSet.ySeries.push(yAxis);
       }
-
+      console.log(dataSet);
       //Get number of rows and columns.
       //TODO: allow for a custom number of rows/columns based on
       //user specification.
@@ -103,12 +108,12 @@ function Grafici(config) {
            pathD = "";
 
       figureOutput = '<figure class="grafici-graph" id="' + this.config.outputID + '-' + currentGraph.id + '">';
-      svgOutput = '<svg class="grafici-graph__svg" viewBox = "0 ' + graphTop + ' ' + this.config.graphSize.width + ' ' + graphBottom + '" version = "1.1">'; 
+      svgOutput = '<svg class="grafici-graph__svg" viewBox = "0 ' + graphTop + ' ' + this.config.graphSize.width + ' ' + graphBottom + '" version = "1.1">';
       pathD;
       graphOutput;
 
       //Create x axis labels svg string
-      var outputXAxis = '<svg class="grafici-graph__xAxis" viewBox = "0 0 ' + this.config.graphSize.width + ' ' + this.config.graphSize.xAxisHeight + '" version = "1.1">'; 
+      var outputXAxis = '<svg class="grafici-graph__xAxis" viewBox = "0 0 ' + this.config.graphSize.width + ' ' + this.config.graphSize.xAxisHeight + '" version = "1.1">';
 
       if (this.config.gridLines) {
         //draw baseline grid's rows
@@ -119,8 +124,8 @@ function Grafici(config) {
         //draw baseline grid's columns
         for (var m = 0; m < this.config.graphSize.width / this.config.gridLines.size; m++) {
           graphOutput += this.drawLine(m * this.config.gridLines.size, graphTop, m * this.config.gridLines.size, graphBottom, this.config.gridLines.stroke, this.config.gridLines.strokeWidth);
-        } 
-      } 
+        }
+      }
 
       if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
         pathD = 'M' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + ((this.config.graphSize.height) + (((currentGraph.yAxis[currentGraph.numRows-1] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height)) + ' L' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom + ' L ' + ((1) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom;
@@ -136,28 +141,28 @@ function Grafici(config) {
         if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
           //lines between datapoints
           if (j + 1 < currentGraph.numRows) {
-            graphOutput += this.drawLine(columnLeft, dataHeight, nextColumnLeft, nextDataHeight, this.config.graphLines.stroke, this.config.graphLines.strokeWidth);  
+            graphOutput += this.drawLine(columnLeft, dataHeight, nextColumnLeft, nextDataHeight, this.config.graphLines.stroke, this.config.graphLines.strokeWidth);
           }
 
           if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
-            pathD += ' L ' + columnLeft + ' ' + dataHeight;  
+            pathD += ' L ' + columnLeft + ' ' + dataHeight;
           }
-          
+
           //datapoints
           graphOutput += this.drawCircle(columnLeft, dataHeight, this.config.graphPoints.radius);
         }
 
         if (currentGraph.graphType.hasOwnProperty('barGraph')) {
           //datapoints
-          graphOutput += this.drawLine(columnLeft, graphBottom, columnLeft, dataHeight, this.config.barGraphLines.stroke, this.config.barGraphLines.strokeWidth); 
+          graphOutput += this.drawLine(columnLeft, graphBottom, columnLeft, dataHeight, this.config.barGraphLines.stroke, this.config.barGraphLines.strokeWidth);
         }
-        
+
         //datalabels
         graphOutput += this.drawText(columnLeft, dataHeight, 3, 1, 'start', 'black', 4, currentGraph.yAxis[j], 'grafici-data-label');
 
         //X axis datalabels
         outputXAxis += this.drawText(columnLeft, this.config.graphSize.xAxisHeight, 0, this.config.graphSize.xAxisHeight/-2, 'middle', 'black', 3, currentGraph.xAxis[j], 'grafici-x-label');
-      } 
+      }
 
       if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
         pathD += " Z";
@@ -174,7 +179,7 @@ function Grafici(config) {
         var labelText = (((currentGraph.max - currentGraph.min) / ((-graphBottom-graphTop) / labelHeight)) + currentGraph.min) + (currentGraph.max-currentGraph.min-graphTop) + graphTop;
 
         labelText = Math.round(labelText * 100) / 100;
-        
+
         graphOutput += this.drawText(0, labelHeight, 0.5, 1, 'start', 'black', 3, labelText, 'grafici-y-label');
       }
 
