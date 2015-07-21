@@ -241,7 +241,7 @@ function Grafici(config) {
       outputXAxis += '</svg>';
       //initialize figure output
 
-      figureOutput += (gridOutput + '<svg class="grafici-graph__svg" viewBox = "0 ' + graphTop + ' ' + this.config.graphSize.width + ' ' + graphBottom + '" version = "1.1">');
+      figureOutput += ('<svg class="grafici-graph__svg" viewBox = "0 ' + graphTop + ' ' + this.config.graphSize.width + ' ' + graphBottom + '" version = "1.1">' + gridOutput);
       //append to figure output each path and graph output with multiple y data series
       for (var seriesDataIndex=0; seriesDataIndex<currentGraph.ySeries.length; seriesDataIndex++) {
         console.log(pathOutput[seriesDataIndex]);
