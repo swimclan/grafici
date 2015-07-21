@@ -51,18 +51,19 @@ function Grafici(config) {
         }
         dataSet.ySeries.push(yAxis);
       }
-      console.log(dataSet);  ///////////////////// Delete this for production
+
       //Get number of rows and columns.
       //TODO: allow for a custom number of rows/columns based on
       //user specification.
       dataSet.numRows = dataSet.xAxis.length;
-      dataSet.numColumns = dataSet.ySeries.length;
+      dataSet.numColumns = dataSet.ySeries[0].length;
 
       // Need to be able to find the max among all the series of y data
       dataSet.max = this.getMaxAmongArrays(dataSet.ySeries);
       dataSet.min = this.getMinAmongArrays(dataSet.ySeries);
 
       this.graphs.push(dataSet);
+      console.log(dataSet)
     }
 
     this.drawGraphs(this.graphs);
@@ -103,7 +104,7 @@ function Grafici(config) {
       this.targetTables[graphIndex].style.cssText = "opacity:0;position:absolute !important;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);";
 
       //Create primary graph svg strings
-       var figureOutput = "",
+       var figureOutput = '<figure class="grafici-graph" id="' + this.config.outputID + '-' + currentGraph.id + '">',
            //need a background grid seperate from the data line graph output to support multiple y data series
            gridOutput = "",
            //multiple graph outputs for each y data series
@@ -113,9 +114,8 @@ function Grafici(config) {
            svgOutput = "",
            //build multiple paths for each y series
            pathD = [];
-
-      figureOutput = '<figure class="grafici-graph" id="' + this.config.outputID + '-' + currentGraph.id + '">';
-      svgOutput = '<svg class="grafici-graph__svg" viewBox = "0 ' + graphTop + ' ' + this.config.graphSize.width + ' ' + graphBottom + '" version = "1.1">';
+      //need an SVG for each series... I think....
+      svgOutput = [];
       gridOutput;
       pathD;
       graphOutput;
@@ -138,9 +138,8 @@ function Grafici(config) {
       if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
         for (var pathDIndex=0; pathDIndex<currentGraph.ySeries.length; pathDIndex++) {
           //mutate pathD with a path for each y series
-          pathD[pathDIndex] = 'M' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + ((this.config.graphSize.height) + (((currentGraph.ySeries[pathDIndex][currentGraph.numRows-1] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height)) + ' L' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom + ' L ' + ((1) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom;
+          pathD[pathDIndex] = 'M ' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + ((this.config.graphSize.height) + (((currentGraph.ySeries[pathDIndex][currentGraph.numRows-1] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height)) + ' L ' + ((currentGraph.numRows) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom + ' L ' + ((1) / (currentGraph.numColumns + 1)) * this.config.graphSize.width + ' ' + graphBottom;
         }
-        console.log(pathD); /////////////////Delete this shit before production
       }
 
       //draw data labels and points
@@ -151,14 +150,12 @@ function Grafici(config) {
         for (var dataHeightIndex = 0; dataHeightIndex < currentGraph.ySeries.length; dataHeightIndex++) {
           dataHeight.push(this.config.graphSize.height + (((currentGraph.ySeries[dataHeightIndex][j] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height));
         }
-        console.log(dataHeight); ////////////delete this shit for production
         var nextColumnLeft = ((j+2) / (currentGraph.numColumns + 1)) * this.config.graphSize.width || false;
         //multiple next data heights for multiple y data series
         var nextDataHeight = [];
         for (var nextDataHeightIndex = 0; nextDataHeightIndex < currentGraph.ySeries.length; nextDataHeightIndex++) {
           nextDataHeight.push(parseInt(this.config.graphSize.height) + (((currentGraph.ySeries[nextDataHeightIndex][j+1] - currentGraph.min) / (currentGraph.max - currentGraph.min)) * -this.config.graphSize.height));
         }
-        console.log(nextDataHeight); ////////////delete this shit for production
         if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
           //lines between datapoints
           if (j + 1 < currentGraph.numRows) {
@@ -167,7 +164,6 @@ function Grafici(config) {
               //check to see if the array is blank (meaning no string in it yet)
               if (graphOutput[seriesIndex] === undefined) {
                 graphOutput[seriesIndex] = "";
-                console.log('This graph element started as undefined')
               }
               graphOutput[seriesIndex] += this.drawLine(columnLeft, dataHeight[seriesIndex], nextColumnLeft, nextDataHeight[seriesIndex], this.config.graphLines.stroke, this.config.graphLines.strokeWidth);
             }
@@ -183,28 +179,46 @@ function Grafici(config) {
           //datapoints
           //add to each graphOutput value in the graphOutput array for each y data series
           for (var graphDataIndex=0; graphDataIndex<currentGraph.ySeries.length; graphDataIndex++) {
+            if (graphOutput[graphDataIndex] === undefined) {
+              graphOutput[graphDataIndex] = "";
+            }
             graphOutput[graphDataIndex] += this.drawCircle(columnLeft, dataHeight[graphDataIndex], this.config.graphPoints.radius);
           }
-          console.log(graphOutput);
         }
 
         if (currentGraph.graphType.hasOwnProperty('barGraph')) {
           //datapoints
-          graphOutput += this.drawLine(columnLeft, graphBottom, columnLeft, dataHeight, this.config.barGraphLines.stroke, this.config.barGraphLines.strokeWidth);
+          // add to each graphOutput value in the graphOutput array
+          for (var graphDataIndex=0; graphDataIndex<currentGraph.ySeries.length; graphDataIndex++) {
+            //check to see if the graphOutput is empty
+            if (graphOutput[graphDataIndex] === undefined) {
+              graphOutput[graphDataIndex] = "";
+            }
+            graphOutput[graphDataIndex] += this.drawLine(columnLeft, graphBottom, columnLeft, dataHeight[graphDataIndex], this.config.barGraphLines.stroke, this.config.barGraphLines.strokeWidth);
+          }
         }
 
         //datalabels
-        graphOutput += this.drawText(columnLeft, dataHeight, 3, 1, 'start', 'black', 4, currentGraph.yAxis[j], 'grafici-data-label');
-
+        //add data labels for each y data series
+        for (var graphDataIndex=0; graphDataIndex<currentGraph.ySeries.length; graphDataIndex++) {
+          // check to make sure the graphOutput is not empty
+          if (graphOutput[graphDataIndex] === undefined) {
+            graphOutput[graphDataIndex] = "";
+          }
+          graphOutput[graphDataIndex] += this.drawText(columnLeft, dataHeight[graphDataIndex], 3, 1, 'start', 'black', 4, currentGraph.ySeries[graphDataIndex][j], 'grafici-data-label');
+        }
         //X axis datalabels
         outputXAxis += this.drawText(columnLeft, this.config.graphSize.xAxisHeight, 0, this.config.graphSize.xAxisHeight/-2, 'middle', 'black', 3, currentGraph.xAxis[j], 'grafici-x-label');
       }
 
-      if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
-        pathD += " Z";
-        var pathOutput = '<path class="grafici-data-path" d="' + pathD + '" fill="' + this.config.pathFill + '"/>';
-      } else {
-        var pathOutput = "";
+      // add to the pathOutput array for multiple y data series
+      for (var pathDataIndex=0; pathDataIndex<currentGraph.ySeries.length; pathDataIndex++) {
+        if (currentGraph.graphType.hasOwnProperty('lineGraph')) {
+            pathD[pathDataIndex] += " Z";
+            pathOutput[pathDataIndex] = '<path class="grafici-data-path" d="' + pathD[pathDataIndex] + '" fill="' + this.config.pathFill + '"/>';
+        } else {
+          pathOutput[pathDataIndex] = "";
+        }
       }
 
       //output Y axis datalabels
@@ -215,13 +229,28 @@ function Grafici(config) {
         var labelText = (((currentGraph.max - currentGraph.min) / ((-graphBottom-graphTop) / labelHeight)) + currentGraph.min) + (currentGraph.max-currentGraph.min-graphTop) + graphTop;
 
         labelText = Math.round(labelText * 100) / 100;
-
-        graphOutput += this.drawText(0, labelHeight, 0.5, 1, 'start', 'black', 3, labelText, 'grafici-y-label');
+        // write multiple label sets for each y data series
+        for (var graphDataIndex=0; graphDataIndex<currentGraph.ySeries.length; graphDataIndex++) {
+          if (graphOutput[graphDataIndex] === undefined) {
+            graphOutput[graphDataIndex] = "";
+          }
+          graphOutput[graphDataIndex] += this.drawText(0, labelHeight, 0.5, 1, 'start', 'black', 3, labelText, 'grafici-y-label');
+        }
       }
 
       outputXAxis += '</svg>';
+      //initialize figure output
 
-      figureOutput += svgOutput + pathOutput + graphOutput + '</svg>' + outputXAxis + '<figcaption>' + currentGraph.title + '</figcaption></figure>';
+      figureOutput += (gridOutput + '<svg class="grafici-graph__svg" viewBox = "0 ' + graphTop + ' ' + this.config.graphSize.width + ' ' + graphBottom + '" version = "1.1">');
+      //append to figure output each path and graph output with multiple y data series
+      for (var seriesDataIndex=0; seriesDataIndex<currentGraph.ySeries.length; seriesDataIndex++) {
+        console.log(pathOutput[seriesDataIndex]);
+
+        figureOutput += (pathOutput[seriesDataIndex] + graphOutput[seriesDataIndex]);
+
+      }
+      figureOutput += ('</svg>');
+      figureOutput += (outputXAxis + '<figcaption>' + currentGraph.title + '</figcaption></figure>');
 
       this.targetTables[graphIndex].insertAdjacentHTML('afterend', figureOutput);
 
@@ -230,7 +259,7 @@ function Grafici(config) {
   };
 
   this.drawLine = function(x1, y1, x2, y2, strokeColor, strokeWidth) {
-    var line = '<line class="grafici-data-line" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + strokeColor + '" stroke-width = "' + strokeWidth + '"/>';
+    var line = '<line class="grafici-data-line" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + strokeColor + '" stroke-width = "' + strokeWidth + '"></line>';
 
     return line;
   };
